@@ -12,7 +12,7 @@ function fetchPullRequests(version, page = 1, pullRequests = []) {
   const excludedReposFilter = EXCLUDED_REPOS.map(repo => `-repo:weaspire/${repo}`).join(' ');
 
   // Construct API URL with filters
-  const apiUrl = `https://api.github.com/search/issues?per_page=100&page=${page}&q=${encodeURIComponent(`is:open is:pr archived:false user:weaspire ${authorsFilter}`).replace(/%2B/g, '+')} ${versionFilter} ${excludedReposFilter}`;
+  const apiUrl = `https://api.github.com/search/issues?per_page=50&page=${page}&q=${encodeURIComponent(`is:open is:pr archived:false user:weaspire ${authorsFilter}`).replace(/%2B/g, '+')} ${versionFilter} ${excludedReposFilter}`;
 
   // Fetch data from GitHub API
   const response = UrlFetchApp.fetch(apiUrl, {
@@ -26,7 +26,7 @@ function fetchPullRequests(version, page = 1, pullRequests = []) {
   const { total_count, items } = JSON.parse(response.getContentText());
 
   // Add fetched pull requests to the array
-  pullRequests.push(...items);
+  pullRequests.push(...(items || []).filter(pullRequest => !EXCLUDED_TITLE_PREFIXES_REGEXP.test(pullRequest.title)));
 
   // If there are more pull requests to fetch, recursively call the function
   if (pullRequests.length < total_count) {
