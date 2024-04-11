@@ -7,7 +7,7 @@ const WEBHOOK_URL = '';
 const RELEASE_SHEET_ID = "";
 const RELEASE_SHEET_NAME = '2024 - Calendar';
 
-const EXCLUDED_TITLE_PREFIXES = ['snyk', 'documentation'];
+const EXCLUDED_TITLE_PREFIXES = ['snyk', 'documentation', 'Release'];
 const EXCLUDED_TITLE_PREFIXES_REGEXP = new RegExp(EXCLUDED_TITLE_PREFIXES.join('|'), 'gim')
 const EXCLUDED_REPOS = ['customer-frontend-storybook'];
 
