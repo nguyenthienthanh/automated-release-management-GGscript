@@ -66,67 +66,131 @@ function getReleaseCalendar(releaseType) {
   return releaseCalendars.find(releaseCalendar => releaseCalendar.releaseType === releaseType);
 }
 
+/**
+ * Sets reminders for the weekly release code freeze date.
+ * Retrieves the release calendar for the weekly release, calculates reminder dates
+ * based on the code freeze date, deletes existing triggers for
+ * sending weekly release reminders, and sets new triggers for the calculated reminder dates.
+ * If no weekly release calendar is found, the function logs a message
+ * indicating that the reminder setting process is skipped.
+ */
 function setWeeklyReleaseReminder() {
+  // Retrieve the release calendar for the weekly release
   const calendar = getReleaseCalendar('Weekly');
 
+  // Check if a weekly release calendar is found
   if (!calendar) {
-    Logger.log('Skip since there\'s no calendar...');
+    Logger.log("Skipping reminder setting: No weekly release calendar found.");
     return;
   }
 
+  // Extract code freeze date from the calendar
   const { codeFreezeDate } = calendar;
 
+  // Calculate reminder dates for weekly release reminders
   const reminderDates = calculateDatesBefore(codeFreezeDate, [1, 2, 3]);
+
+  // Delete existing triggers for sending weekly release reminders
   deleteTriggers('sendWeeklyReleaseReminder');
 
+  // Set new triggers for the calculated reminder dates
   const currentDate = new Date();
   reminderDates.forEach(reminderDate => {
     if (reminderDate < currentDate) {
-      Logger.log(`Skip the date ${reminderDate.toDateString()}`);
+      Logger.log(`Skipping trigger setting for the date ${reminderDate.toDateString()}`);
       return;
     }
 
+    // Set the trigger time to 11:11 AM
     reminderDate.setHours(11);
     reminderDate.setMinutes(11);
 
+    // Set the trigger for sending weekly release reminders
     setTrigger('sendWeeklyReleaseReminder', reminderDate);
   });
 }
 
+/**
+ * Sets reminders for the monthly release and feature code freeze dates.
+ * Retrieves the release calendar for the monthly release, calculates reminder dates
+ * based on the release and code freeze dates, deletes existing triggers for
+ * sending monthly release reminders, and sets new triggers for the calculated reminder dates.
+ * If no monthly release calendar is found, the function logs a message
+ * indicating that the reminder setting process is skipped.
+ */
 function setMonthlyReleaseReminder() {
+  // Retrieve the release calendar for the monthly release
   const calendar = getReleaseCalendar('Monthly');
 
+  // Check if a monthly release calendar is found
   if (!calendar) {
-    Logger.log('Skip since there\'s no calendar...');
+    Logger.log("Skipping reminder setting: No monthly release calendar found.");
     return;
   }
 
+  // Extract release and code freeze dates from the calendar
   const { releaseDate, codeFreezeDate } = calendar;
+
+  // Calculate reminder dates for release and code freeze reminders
   const releaseReminderDates = calculateDatesBefore(releaseDate, [2, 3, 4]);
   const codeFreezeReminderDates = calculateDatesBefore(codeFreezeDate, [1, 2, 4, 6, 8]);
+
+  // Delete existing triggers for sending monthly release reminders
   deleteTriggers('sendMonthlyReleaseReminder');
 
+  // Set new triggers for the calculated reminder dates
   const currentDate = new Date();
   [...codeFreezeReminderDates, ...releaseReminderDates].forEach(reminderDate => {
     if (reminderDate < currentDate) {
-      Logger.log(`Skip the date ${reminderDate.toDateString()}`);
+      Logger.log(`Skipping trigger setting for the date ${reminderDate.toDateString()}`);
       return;
     }
 
+    // Set the trigger time to 11:11 AM
     reminderDate.setHours(11);
     reminderDate.setMinutes(11);
 
+    // Set the trigger for sending monthly release reminders
+    setTrigger('sendMonthlyReleaseReminder', reminderDate);
+  });
+
+  const lastReminderDates = [codeFreezeReminderDates[0], releaseReminderDates[0]];
+  lastReminderDates.forEach(reminderDate => {
+    if (reminderDate < currentDate) {
+      Logger.log(`Skipping trigger setting for the date ${reminderDate.toDateString()}`);
+      return;
+    }
+
+    // Set the trigger time to 11:11 AM
+    reminderDate.setHours(17);
+    reminderDate.setMinutes(17);
+
+    // Set the trigger for sending monthly release reminders
     setTrigger('sendMonthlyReleaseReminder', reminderDate);
   });
 }
 
+/**
+ * Sends a reminder message for the weekly release.
+ * Retrieves the release calendar for the weekly release, generates a message
+ * based on the release information, and posts the message to Slack.
+ * If no weekly release calendar is found, the function logs a message
+ * indicating that the reminder is skipped.
+ */
 function sendWeeklyReleaseReminder() {
+  // Retrieve the release calendar for the weekly release
   const calendar = getReleaseCalendar('Weekly');
+
+  // Check if a weekly release calendar is found
   if (!calendar) {
-    Logger.log('Skip since there\'s no calendar...');
+    Logger.log("Skipping reminder: No weekly release calendar found.");
     return;
   }
+
+  // Extract release information from the calendar
   const { version, codeFreezeDate, releaseDate } = calendar;
+
+  // Generate release message
   const message = generateReleaseMessage(version, {
     isWeeklyRelease: true,
     isFCTPeriod: false,
@@ -134,18 +198,34 @@ function sendWeeklyReleaseReminder() {
     codeFreezeDate,
   });
 
+  // Post the release message to Slack
   postSlackMessage(message);
 }
 
+/**
+ * Sends a reminder message for the monthly release.
+ * Retrieves the release calendar for the monthly release, generates a message
+ * based on the release information, and posts the message to Slack.
+ * If no monthly release calendar is found, the function logs a message
+ * indicating that the reminder is skipped.
+ */
 function sendMonthlyReleaseReminder() {
+  // Retrieve the release calendar for the monthly release
   const calendar = getReleaseCalendar('Monthly');
+
+  // Check if a monthly release calendar is found
   if (!calendar) {
-    Logger.log('Skip since there\'s no calendar...');
+    Logger.log("Skipping reminder: No monthly release calendar found.");
     return;
   }
-  const { version, codeFreezeDate, releaseDate } = calendar;
-  const isFCTPeriod = codeFreezeDate < today;
 
+  // Extract release information from the calendar
+  const { version, codeFreezeDate, releaseDate } = calendar;
+
+  // Determine if it's a feature code freeze period
+  const isFCTPeriod = codeFreezeDate < new Date();
+
+  // Generate release message
   const message = generateReleaseMessage(version, {
     isWeeklyRelease: false,
     isFCTPeriod,
@@ -153,5 +233,6 @@ function sendMonthlyReleaseReminder() {
     codeFreezeDate,
   });
 
+  // Post the release message to Slack
   postSlackMessage(message);
 }
