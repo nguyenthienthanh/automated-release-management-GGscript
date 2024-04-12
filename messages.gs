@@ -143,24 +143,20 @@ function generateReleaseMessage(version, options) {
   }
 
   const pullRequests = fetchPullRequests(version);
-  const total = pullRequests?.length;
-  if (!total) {
+  if (!pullRequests?.length) {
     Logger.log(`Skip since there are no PRs for the milestone ${version}...`);
     return '';
   }
 
   const groupedPullRequestsByUsers = groupPullRequestsByUser(pullRequests);
   return message + Object.entries(groupedPullRequestsByUsers)
-    .map(([userId, pullRequests]) => `<@${userId}>: <https://github.com/search?q=org%3Aweaspire+is%3Aopen+is%3Apr+author%3A${pullRequests[0].user}+milestone%3A${version}&type=pullrequests | ${total} PR${total > 1 ? 's' : ''}>`)
+    .map(([userId, userPullRequests]) => {
+      const total = userPullRequests?.length;
+      if (!total) {
+        return '';
+      }
+
+      return `<@${userId}>: <https://github.com/search?q=org%3Aweaspire+is%3Aopen+is%3Apr+author%3A${userPullRequests[0].user}+milestone%3A${version}&type=pullrequests | ${total} PR${total > 1 ? 's' : ''}>`
+    })
     .join('\n\n');
-}
-
-function postSlackMessage(message) {
-  const response = UrlFetchApp.fetch(WEBHOOK_URL, {
-    method: 'post',
-    contentType: 'application/json',
-    payload: JSON.stringify({ 'text': message })
-  });
-
-  Logger.log(response);
 }
