@@ -96,14 +96,14 @@ function setWeeklyReleaseReminder() {
   // Set new triggers for the calculated reminder dates
   const currentDate = new Date();
   reminderDates.forEach(reminderDate => {
+    // Set the trigger time to 11:11 AM
+    reminderDate.setHours(11);
+    reminderDate.setMinutes(11);
+
     if (reminderDate < currentDate) {
       Logger.log(`Skipping trigger setting for the date ${reminderDate.toDateString()}`);
       return;
     }
-
-    // Set the trigger time to 11:11 AM
-    reminderDate.setHours(11);
-    reminderDate.setMinutes(11);
 
     // Set the trigger for sending weekly release reminders
     setTrigger('sendWeeklyReleaseReminder', reminderDate);
@@ -133,37 +133,39 @@ function setMonthlyReleaseReminder() {
 
   // Calculate reminder dates for release and code freeze reminders
   const releaseReminderDates = calculateDatesBefore(releaseDate, [2, 3, 4]);
-  const codeFreezeReminderDates = calculateDatesBefore(codeFreezeDate, [1, 2, 4, 6, 8]);
+  const codeFreezeReminderDates = calculateDatesBefore(codeFreezeDate, [1, 2, 3, 5, 7, 9]);
 
   // Delete existing triggers for sending monthly release reminders
   deleteTriggers('sendMonthlyReleaseReminder');
 
-  // Set new triggers for the calculated reminder dates
   const currentDate = new Date();
+  // Set new triggers for the calculated reminder dates
   [...codeFreezeReminderDates, ...releaseReminderDates].forEach(reminderDate => {
-    if (reminderDate < currentDate) {
-      Logger.log(`Skipping trigger setting for the date ${reminderDate.toDateString()}`);
-      return;
-    }
-
     // Set the trigger time to 11:11 AM
     reminderDate.setHours(11);
     reminderDate.setMinutes(11);
+
+    if (reminderDate < currentDate) {
+      Logger.log(`Skipping trigger setting for the date ${reminderDate.toLocaleDateString()} ${reminderDate.toLocaleTimeString()}`);
+      return;
+    }
 
     // Set the trigger for sending monthly release reminders
     setTrigger('sendMonthlyReleaseReminder', reminderDate);
   });
 
-  const lastReminderDates = [codeFreezeReminderDates[0], releaseReminderDates[0]];
+  const lastReminderDates = codeFreezeReminderDates.slice(0, 3).concat([releaseReminderDates[0]]);
+
   lastReminderDates.forEach(reminderDate => {
+    // Set the trigger time to 16:16 AM
+    reminderDate.setHours(16);
+    reminderDate.setMinutes(16);
+
     if (reminderDate < currentDate) {
-      Logger.log(`Skipping trigger setting for the date ${reminderDate.toDateString()}`);
+      Logger.log(`Skipping trigger setting for the date ${reminderDate.toLocaleDateString()} ${reminderDate.toLocaleTimeString()}`);
       return;
     }
 
-    // Set the trigger time to 11:11 AM
-    reminderDate.setHours(17);
-    reminderDate.setMinutes(17);
 
     // Set the trigger for sending monthly release reminders
     setTrigger('sendMonthlyReleaseReminder', reminderDate);
